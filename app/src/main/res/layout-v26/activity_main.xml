@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#E1F5FE"
+    android:clipToPadding="false"
+    android:elevation="0dp"
+    tools:context=".MainActivity">
+
+
+    <!--    <Button-->
+    <!--        android:id="@+id/stopButton"-->
+    <!--        android:layout_width="128dp"-->
+    <!--        android:layout_height="64dp"-->
+    <!--        android:background="#2E7D32"-->
+    <!--        android:text="stop"-->
+    <!--        app:layout_constraintBottom_toBottomOf="parent"-->
+    <!--        app:layout_constraintEnd_toEndOf="parent"-->
+    <!--        app:layout_constraintHorizontal_bias="0.501"-->
+    <!--        app:layout_constraintStart_toStartOf="parent"-->
+    <!--        app:layout_constraintTop_toTopOf="parent"-->
+    <!--        app:layout_constraintVertical_bias="0.619" />-->
+
+    <SeekBar
+        android:id="@+id/sensitivitySeekbar"
+        android:layout_width="312dp"
+        android:layout_height="36dp"
+        android:layout_marginTop="12dp"
+        android:progressBackgroundTint="#000"
+        android:thumb="@drawable/thumb"
+        android:min="1"
+        android:max="100"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/sensitivityTextview" />
+
+    <SeekBar
+        android:max="7"
+        android:min="3"
+        android:id="@+id/recordingLengthSeekbar"
+        android:layout_width="312dp"
+        android:layout_height="36dp"
+        android:layout_marginTop="108dp"
+        android:progressBackgroundTint="#000"
+        android:thumb="@drawable/thumb"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.494"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/sensitivityTextview" />
+
+    <Button
+        android:id="@+id/startButton"
+        android:layout_width="128dp"
+        android:layout_height="64dp"
+        android:background="@drawable/button"
+        android:clipToPadding="false"
+        android:elevation="44dp"
+        android:onClick="RecordBtn"
+        android:text="Start"
+        android:textColor="#000000"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.839" />
+
+    <Button
+        android:id="@+id/OpenAudioBtn"
+        android:layout_width="168dp"
+        android:layout_height="48dp"
+        android:layout_marginTop="140dp"
+        android:background="@drawable/button"
+        android:clipToPadding="false"
+        android:elevation="6dp"
+        android:text="Open target audio"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:maxWidth="350dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:textColor="#000000"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/OpenAudioBtn"
+        tools:text="Target audio name" />
+
+    <TextView
+        android:id="@+id/sensitivityTextview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="96dp"
+        android:text="sensitivity = 1 %"
+        android:textColor="#000000"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/OpenAudioBtn" />
+
+    <TextView
+        android:id="@+id/recordingLengthTextview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="196dp"
+        android:text="Recording length = 3s"
+        android:textColor="#000000"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/OpenAudioBtn" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
