@@ -1,7 +1,6 @@
 package com.example.voicedetector;
 
 import android.content.Context;
-import android.os.Environment;
 import android.os.Handler;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -37,7 +36,9 @@ public class VoiceProcess {
         this.context = context;
         this.directory = directory;
         waveRecorder = new WaveRecorder(this.directory.getPath() + "/voice" + number + ".wav");
+        waveRecorder.getWaveConfig().setSampleRate(44100);
         waveRecorder.setNoiseSuppressorActive(true);
+
 
     }
 
@@ -96,5 +97,9 @@ public class VoiceProcess {
 
     public void setSensitivity(int timeLength) {
         this.timeLength = timeLength;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
     }
 }

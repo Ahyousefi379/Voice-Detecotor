@@ -225,34 +225,12 @@ public class MainActivity extends AppCompatActivity {
                 if (resultCode == RESULT_OK) {
                     Uri uri = data.getData();
                     path = getRealPathFromURI(uri);
-//                    File AudioFile = new File(data.getData().toString());
-//                    path=AudioFile.getAbsolutePath();
                     textView.setText(path);
-                    IConvertCallback callback = new IConvertCallback() {
-                        @Override
-                        public void onSuccess(File convertedFile) {
-                            textView.setText("done!");
+                    if (isBuilt){
+                        voiceProcess2.setPath(path);
+                        voiceProcess1.setPath(path);
+                    }
 
-                            // So fast? Love it!
-                        }
-
-                        @Override
-                        public void onFailure(Exception error) {
-
-                        }
-                    };
-//                    AndroidAudioConverter.with(this)
-//                            // Your current audio file
-//                            .setFile(AudioFile)
-//
-//                            // Your desired audio format
-//                            .setFormat(AudioFormat.WAV)
-//
-//                            // An callback to know when conversion is finished
-//                            .setCallback(callback)
-//
-//                            // Start conversion
-//                            .convert();
 
 
                 }
