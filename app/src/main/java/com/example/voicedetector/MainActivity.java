@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.SeekBar;
@@ -20,8 +21,6 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.loader.content.CursorLoader;
-
-import com.musicg.wave.Wave;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -35,6 +34,8 @@ import cafe.adriel.androidaudioconverter.AndroidAudioConverter;
 import cafe.adriel.androidaudioconverter.callback.IConvertCallback;
 import cafe.adriel.androidaudioconverter.callback.ILoadCallback;
 import cafe.adriel.androidaudioconverter.model.AudioFormat;
+import javazoom.jl.converter.Converter;
+import javazoom.jl.decoder.JavaLayerException;
 
 
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
@@ -50,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
     Thread thread1, thread2;
     String path;
     SeekBar sensitivitySeekBar, recordingLengthSeekBar;
+    IConvertCallback callback;
     int timeLength, sensitivity;
     private boolean isRecording = false, isBuilt = false;
 
@@ -117,21 +119,45 @@ public class MainActivity extends AppCompatActivity {
         actionButton = findViewById(R.id.startButton);
         openAudioBtn = findViewById(R.id.OpenAudioBtn);
         textView = findViewById(R.id.textView);
-
         AndroidAudioConverter.load(this, new ILoadCallback() {
             @Override
             public void onSuccess() {
+                Log.e("Converter", "library loaded");
+
                 // Great!
             }
 
             @Override
             public void onFailure(Exception error) {
                 // FFmpeg is not supported by device
+                Log.e("Converter", "library didnt load");
 
             }
         });
 
+         callback = new IConvertCallback() {
+            @Override
+            public void onSuccess(File convertedFile) {
+                Log.e("Converter", "convert done "+ convertedFile.getPath());
+                if (convertedFile.exists()) {
+                    Log.e("Converter", "converted file exist");}
+                if (convertedFile!=null) {
+                    Log.e("Converter", "convertedfile is null");
+                }else {
+                    Log.e("Converter", "converted file is not null");
 
+
+                }
+
+                }
+
+
+            @Override
+            public void onFailure(Exception error) {
+                Log.e("Converter", "problem is converting error :  "+error.getMessage());
+                // Oops! Something went wrong
+            }
+        };
         // todo use room and save sensitivity and time length
         sensitivity = 1;
         timeLength = 3;
@@ -224,13 +250,14 @@ public class MainActivity extends AppCompatActivity {
             case PICK_FILE_RESULT_CODE:
                 if (resultCode == RESULT_OK) {
                     Uri uri = data.getData();
-                    path = getRealPathFromURI(uri);
-                    textView.setText(path);
-                    if (isBuilt){
+//                    path = getRealPathFromURI(uri);
+                    converter(data.getData().getPath(),getFileName(uri));
+
+
+                    if (isBuilt) {
                         voiceProcess2.setPath(path);
                         voiceProcess1.setPath(path);
                     }
-
 
 
                 }
@@ -314,13 +341,48 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private String getRealPathFromURI(Uri contentUri) {
-        String[] proj = {MediaStore.Images.Media.DATA};
+        String[] proj = {MediaStore.Audio.Media.DATA};
         CursorLoader loader = new CursorLoader(this, contentUri, proj, null, null, null);
         Cursor cursor = loader.loadInBackground();
-        int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+        int column_index = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA);
         cursor.moveToFirst();
         String result = cursor.getString(column_index);
         cursor.close();
         return result;
     }
+
+    private void converter(String pathString,String child) {
+
+
+        File flacFile = new File(pathString,child);
+        if (flacFile==null){
+            Log.e("Converter", "flacfile is null");
+            Log.e("Converter", "path = " + pathString );
+
+
+        }
+        else {
+            Log.e("Converter", "flac file in not empty");
+        }
+        if (!flacFile.exists()){
+            Log.e("Converter", "flac file doesnt exists");
+
+        }
+
+        AndroidAudioConverter.with(this)
+                // Your current audio file
+                .setFile(flacFile)
+
+                // Your desired audio format
+                .setFormat(AudioFormat.WAV)
+
+                // An callback to know when conversion is finished
+                .setCallback(callback)
+
+                // Start conversion
+                .convert();
+
+    }
+
+    ;
 }
