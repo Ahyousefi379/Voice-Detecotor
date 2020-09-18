@@ -1,10 +1,14 @@
 package com.example.voicedetector;
 
 import android.content.Context;
+import android.media.MediaPlayer;
+import android.os.Build;
 import android.os.Handler;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.RequiresApi;
 
 import com.github.squti.androidwaverecorder.WaveRecorder;
 import com.musicg.fingerprint.FingerprintSimilarity;
@@ -54,6 +58,7 @@ public class VoiceProcess {
             }
         };
         runnable2 = new Runnable() {
+            @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
             @Override
             public void run() {
 
@@ -68,8 +73,8 @@ public class VoiceProcess {
                 //todo process
 
                 if (fingerprintSimilarity.getScore() >= sensitivity) {
-                    Toast.makeText(context, "similarity is more than sensitivity = " + fingerprintSimilarity.getScore(), Toast.LENGTH_SHORT).show();
-
+                    MainActivity mainActivity=new MainActivity();
+                    mainActivity.startAlarm();
 
                 }
                 handler.postDelayed(runnable1, (timeLength - 2) * 1000);
@@ -102,4 +107,6 @@ public class VoiceProcess {
     public void setPath(String path) {
         this.path = path;
     }
+
+
 }

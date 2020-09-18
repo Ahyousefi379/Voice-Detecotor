@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -26,7 +27,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.channels.FileChannel;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -43,6 +45,8 @@ public class MainActivity extends AppCompatActivity {
     private static final int VOICE_RECORD_PERMISSION_CODE = 100;
     private static final int STORAGE_READ_PERMISSION_CODE = 101;
     private static final int STORAGE_WRITE_PERMISSION_CODE = 102;
+    private static final int WAKE_LOCK_PERMISSION_CODE = 103;
+
     private static final int PICK_FILE_RESULT_CODE = 1;
     Button actionButton, openAudioBtn;
     TextView textView, sensitivityTextview, recordingLengthTextview;
@@ -53,56 +57,23 @@ public class MainActivity extends AppCompatActivity {
     SeekBar sensitivitySeekBar, recordingLengthSeekBar;
     IConvertCallback callback;
     int timeLength, sensitivity;
+    MediaPlayer mediaPlayer;
+
     private boolean isRecording = false, isBuilt = false;
 
-    public static void copyFileOrDirectory(String srcDir, String dstDir) {
-
-        try {
-            File src = new File(srcDir);
-            File dst = new File(dstDir, src.getName());
-
-            if (src.isDirectory()) {
-
-                String files[] = src.list();
-                int filesLength = files.length;
-                for (int i = 0; i < filesLength; i++) {
-                    String src1 = (new File(src, files[i]).getPath());
-                    String dst1 = dst.getPath();
-                    copyFileOrDirectory(src1, dst1);
-
+    public static void copy(File src, File dst) throws IOException {
+        try (InputStream in = new FileInputStream(src)) {
+            try (OutputStream out = new FileOutputStream(dst)) {
+                // Transfer bytes from in to out
+                byte[] buf = new byte[1024];
+                int len;
+                while ((len = in.read(buf)) > 0) {
+                    out.write(buf, 0, len);
                 }
-            } else {
-                copyFile(src, dst);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void copyFile(File sourceFile, File destFile) throws IOException {
-        if (!destFile.getParentFile().exists())
-            destFile.getParentFile().mkdirs();
-
-        if (!destFile.exists()) {
-            destFile.createNewFile();
-        }
-
-        FileChannel source = null;
-        FileChannel destination = null;
-
-        try {
-            source = new FileInputStream(sourceFile).getChannel();
-            destination = new FileOutputStream(destFile).getChannel();
-            destination.transferFrom(source, 0, source.size());
-        } finally {
-            if (source != null) {
-                source.close();
-            }
-            if (destination != null) {
-                destination.close();
             }
         }
     }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -112,6 +83,7 @@ public class MainActivity extends AppCompatActivity {
         checkPermission(Manifest.permission.RECORD_AUDIO, VOICE_RECORD_PERMISSION_CODE);
         checkPermission(Manifest.permission.READ_EXTERNAL_STORAGE, STORAGE_READ_PERMISSION_CODE);
         checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, STORAGE_WRITE_PERMISSION_CODE);
+        checkPermission(Manifest.permission.WAKE_LOCK, WAKE_LOCK_PERMISSION_CODE);
         sensitivitySeekBar = findViewById(R.id.sensitivitySeekbar);
         recordingLengthTextview = findViewById(R.id.recordingLengthTextview);
         recordingLengthSeekBar = findViewById(R.id.recordingLengthSeekbar);
@@ -119,6 +91,8 @@ public class MainActivity extends AppCompatActivity {
         actionButton = findViewById(R.id.startButton);
         openAudioBtn = findViewById(R.id.OpenAudioBtn);
         textView = findViewById(R.id.textView);
+        mediaPlayer = MediaPlayer.create(this, R.raw.alarmsound);
+
         AndroidAudioConverter.load(this, new ILoadCallback() {
             @Override
             public void onSuccess() {
@@ -135,26 +109,16 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-         callback = new IConvertCallback() {
+        callback = new IConvertCallback() {
             @Override
             public void onSuccess(File convertedFile) {
-                Log.e("Converter", "convert done "+ convertedFile.getPath());
-                if (convertedFile.exists()) {
-                    Log.e("Converter", "converted file exist");}
-                if (convertedFile!=null) {
-                    Log.e("Converter", "convertedfile is null");
-                }else {
-                    Log.e("Converter", "converted file is not null");
-
-
-                }
-
-                }
+                Toast.makeText(MainActivity.this, "converting finished", Toast.LENGTH_SHORT).show();
+            }
 
 
             @Override
             public void onFailure(Exception error) {
-                Log.e("Converter", "problem is converting error :  "+error.getMessage());
+                Log.e("Converter", "problem is converting error :  " + error.getMessage());
                 // Oops! Something went wrong
             }
         };
@@ -249,23 +213,22 @@ public class MainActivity extends AppCompatActivity {
         switch (requestCode) {
             case PICK_FILE_RESULT_CODE:
                 if (resultCode == RESULT_OK) {
-                    Uri uri = data.getData();
-//                    path = getRealPathFromURI(uri);
-                    converter(data.getData().getPath(),getFileName(uri));
 
 
-                    if (isBuilt) {
-                        voiceProcess2.setPath(path);
-                        voiceProcess1.setPath(path);
+                    try {
+                        copy(new File(getRealPathFromURI(data.getData())), new File(directory + "/" + getFileName(data.getData())));
+                        new File(directory + "/" + getFileName(data.getData())).renameTo(new File(directory + "/targetvoice.mp3"));
+//                        new Converter().convert(directory + "/targetvoice.mp3",directory + "/targetvoice.wav");
+                        new Converter().convert(directory + "/targetvoice.m4a",directory + "/targetvoice.wav");
+                    } catch (IOException | JavaLayerException e) {
+                        textView.setText(e.getMessage());
                     }
-
 
                 }
 
         }
 
     }
-
 
     public void RecordBtn(View view) {
 
@@ -351,30 +314,16 @@ public class MainActivity extends AppCompatActivity {
         return result;
     }
 
-    private void converter(String pathString,String child) {
+    private void converter() {
 
-
-        File flacFile = new File(pathString,child);
-        if (flacFile==null){
-            Log.e("Converter", "flacfile is null");
-            Log.e("Converter", "path = " + pathString );
-
-
-        }
-        else {
-            Log.e("Converter", "flac file in not empty");
-        }
-        if (!flacFile.exists()){
-            Log.e("Converter", "flac file doesnt exists");
-
-        }
 
         AndroidAudioConverter.with(this)
                 // Your current audio file
-                .setFile(flacFile)
+                .setFile(new File(directory + "/targetvoice.mp3"))
 
                 // Your desired audio format
                 .setFormat(AudioFormat.WAV)
+
 
                 // An callback to know when conversion is finished
                 .setCallback(callback)
@@ -384,5 +333,23 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    ;
+    public void startAlarm() {
+        Intent intent = new Intent(this, AlarmActivity.class);
+        startActivity(intent);
+        isRecording = false;
+        actionButton.setText("Start");
+        voiceProcess1.stop();
+        voiceProcess2.stop();
+        thread1.interrupt();
+        thread2.interrupt();
+        mediaPlayer.start();
+
+    }
+
+    public void stopAlarm() {
+        mediaPlayer.stop();
+        finish();
+
+    }
+
 }
