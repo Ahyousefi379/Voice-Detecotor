@@ -64,9 +64,9 @@ public class VoiceProcess {
 
                 waveRecorder.stopRecording();
                 isRecording = false;
-                Wave wave = new Wave(path);
+                Wave wave = new Wave(directory+ "/voice" + number + ".wav");
 //                Wave wave = new Wave(Environment.getExternalStorageDirectory() + "/Folan/voice1.wav");
-                Wave wave2 = new Wave(directory.getPath() + "/voice" + number + ".wav");
+                Wave wave2 = new Wave(directory + "/targetvoice.wav");
                 FingerprintSimilarity fingerprintSimilarity = wave.getFingerprintSimilarity(wave2);
                 Toast.makeText(context, "similarity = " + fingerprintSimilarity.getScore(), Toast.LENGTH_SHORT).show();
 

@@ -213,15 +213,36 @@ public class MainActivity extends AppCompatActivity {
         switch (requestCode) {
             case PICK_FILE_RESULT_CODE:
                 if (resultCode == RESULT_OK) {
+                    String type = getFileName(data.getData());
+
+                    if (type.contains(".mp3")) {
+                        try {
+                            copy(new File(getRealPathFromURI(data.getData())), new File(directory + "/" + getFileName(data.getData())));
+                            new File(directory + "/" + getFileName(data.getData())).renameTo(new File(directory + "/targetvoice.mp3"));
+
+                            new Converter().convert(directory + "/targetvoice.m4a", directory + "/targetvoice.wav");
+                        } catch (IOException | JavaLayerException e) {
+                            textView.setText(e.getMessage());
+                        }
+                    } else {
+                        if (!type.contains(".wav")) {
+                            Toast.makeText(this, "Please select a WAV or MP3 target audio", Toast.LENGTH_SHORT).show();
 
 
-                    try {
-                        copy(new File(getRealPathFromURI(data.getData())), new File(directory + "/" + getFileName(data.getData())));
-                        new File(directory + "/" + getFileName(data.getData())).renameTo(new File(directory + "/targetvoice.mp3"));
-//                        new Converter().convert(directory + "/targetvoice.mp3",directory + "/targetvoice.wav");
-                        new Converter().convert(directory + "/targetvoice.m4a",directory + "/targetvoice.wav");
-                    } catch (IOException | JavaLayerException e) {
-                        textView.setText(e.getMessage());
+                        }
+                        else{ if (type.contains(".wav")){
+                            try {
+                                copy(new File(getRealPathFromURI(data.getData())), new File(directory + "/" + getFileName(data.getData())));
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            new File(directory + "/" + getFileName(data.getData())).renameTo(new File(directory + "/targetvoice.wav"));
+
+                        }
+
+                        }
+
+
                     }
 
                 }
@@ -233,15 +254,22 @@ public class MainActivity extends AppCompatActivity {
     public void RecordBtn(View view) {
 
         if (!isRecording) {
-            isRecording = true;
-            actionButton.setText("Stop");
-            sensitivityTextview = findViewById(R.id.sensitivityTextview);
-            voiceProcess1 = new VoiceProcess(1, directory, this, path, sensitivityTextview, sensitivitySeekBar, recordingLengthTextview, timeLength, sensitivity);
-            voiceProcess2 = new VoiceProcess(2, directory, this, path, sensitivityTextview, sensitivitySeekBar, recordingLengthTextview, timeLength, sensitivity);
-            if (!isBuilt) {
-                isBuilt = true;
+            if (new File(directory + "/targetvoice.wav").exists()) {
+
+
+                isRecording = true;
+                actionButton.setText("Stop");
+                sensitivityTextview = findViewById(R.id.sensitivityTextview);
+                voiceProcess1 = new VoiceProcess(1, directory, this, path, sensitivityTextview, sensitivitySeekBar, recordingLengthTextview, timeLength, sensitivity);
+                voiceProcess2 = new VoiceProcess(2, directory, this, path, sensitivityTextview, sensitivitySeekBar, recordingLengthTextview, timeLength, sensitivity);
+                if (!isBuilt) {
+                    isBuilt = true;
+                }
+                VoiceThreads();
             }
-            VoiceThreads();
+            else{
+                Toast.makeText(this, "Please select a WAV or MP3 target audio", Toast.LENGTH_LONG).show();
+            }
 
         } else {
             if (isRecording) {
@@ -319,10 +347,10 @@ public class MainActivity extends AppCompatActivity {
 
         AndroidAudioConverter.with(this)
                 // Your current audio file
-                .setFile(new File(directory + "/targetvoice.mp3"))
+                .setFile(new File(directory + "/targetvoice.m4a"))
 
                 // Your desired audio format
-                .setFormat(AudioFormat.WAV)
+                .setFormat(AudioFormat.MP3)
 
 
                 // An callback to know when conversion is finished
