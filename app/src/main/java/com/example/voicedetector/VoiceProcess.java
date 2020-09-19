@@ -1,9 +1,9 @@
 package com.example.voicedetector;
 
 import android.content.Context;
-import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Handler;
+import android.widget.Button;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -23,19 +23,24 @@ public class VoiceProcess {
     Handler handler = new Handler();
     Runnable runnable1, runnable2;
     TextView textView, textView2;
-    SeekBar seekBar, seekBar2;
+    SeekBar seekBar;
     String path;
+    Button stopAlarm;
     Context context;
     int sensitivity;
+    MainActivity activity;
     boolean isRecording;
 
-    public VoiceProcess(int number, File directory, Context context, String path, TextView textView, SeekBar seekBar, TextView textView2, int timeLength, int sensitivity) {
+    public VoiceProcess(int number, File directory, Context context, String path, TextView textView,
+                        SeekBar seekBar, TextView textView2, int timeLength, int sensitivity, Button stopAlarm, MainActivity activity) {
         this.seekBar = seekBar;
         this.number = number;
         this.sensitivity = sensitivity;
         this.timeLength = timeLength;
         this.textView2 = textView2;
+        this.stopAlarm = stopAlarm;
         this.path = path;
+        this.activity = activity;
         this.textView = textView;
         this.context = context;
         this.directory = directory;
@@ -64,21 +69,21 @@ public class VoiceProcess {
 
                 waveRecorder.stopRecording();
                 isRecording = false;
-                Wave wave = new Wave(directory+ "/voice" + number + ".wav");
-//                Wave wave = new Wave(Environment.getExternalStorageDirectory() + "/Folan/voice1.wav");
+                Wave wave = new Wave(directory + "/voice" + number + ".wav");
                 Wave wave2 = new Wave(directory + "/targetvoice.wav");
-                FingerprintSimilarity fingerprintSimilarity = wave.getFingerprintSimilarity(wave2);
+                FingerprintSimilarity fingerprintSimilarity;
+                fingerprintSimilarity = wave.getFingerprintSimilarity(wave2);
                 Toast.makeText(context, "similarity = " + fingerprintSimilarity.getScore(), Toast.LENGTH_SHORT).show();
 
                 //todo process
 
-                if (fingerprintSimilarity.getScore() >= sensitivity) {
-                    MainActivity mainActivity=new MainActivity();
-                    mainActivity.startAlarm();
+                if (fingerprintSimilarity.getScore() * 100 >= sensitivity) {
+                    activity.startAlarm();
+                    stop();
 
+                } else {
+                    handler.postDelayed(runnable1, (timeLength - 2) * 1000);
                 }
-                handler.postDelayed(runnable1, (timeLength - 2) * 1000);
-
 
             }
 
@@ -102,10 +107,6 @@ public class VoiceProcess {
 
     public void setSensitivity(int timeLength) {
         this.timeLength = timeLength;
-    }
-
-    public void setPath(String path) {
-        this.path = path;
     }
 
 

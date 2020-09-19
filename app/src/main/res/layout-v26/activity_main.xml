@@ -9,40 +9,43 @@
     android:elevation="0dp"
     tools:context=".MainActivity">
 
+    <Button
+        android:id="@+id/stopAlarmBtn"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#F06292"
+        android:onClick="stopAlarm"
+        android:text="Stop Alarm"
+        android:textAllCaps="true"
+        android:textSize="68sp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-    <!--    <Button-->
-    <!--        android:id="@+id/stopButton"-->
-    <!--        android:layout_width="128dp"-->
-    <!--        android:layout_height="64dp"-->
-    <!--        android:background="#2E7D32"-->
-    <!--        android:text="stop"-->
-    <!--        app:layout_constraintBottom_toBottomOf="parent"-->
-    <!--        app:layout_constraintEnd_toEndOf="parent"-->
-    <!--        app:layout_constraintHorizontal_bias="0.501"-->
-    <!--        app:layout_constraintStart_toStartOf="parent"-->
-    <!--        app:layout_constraintTop_toTopOf="parent"-->
-    <!--        app:layout_constraintVertical_bias="0.619" />-->
+    />
 
     <SeekBar
         android:id="@+id/sensitivitySeekbar"
         android:layout_width="312dp"
         android:layout_height="36dp"
         android:layout_marginTop="12dp"
+        android:max="100"
+        android:min="1"
         android:progressBackgroundTint="#000"
         android:thumb="@drawable/thumb"
-        android:min="1"
-        android:max="100"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/sensitivityTextview" />
 
     <SeekBar
-        android:max="7"
-        android:min="3"
         android:id="@+id/recordingLengthSeekbar"
         android:layout_width="312dp"
         android:layout_height="36dp"
         android:layout_marginTop="108dp"
+        android:max="7"
+        android:min="3"
         android:progressBackgroundTint="#000"
         android:thumb="@drawable/thumb"
         app:layout_constraintEnd_toEndOf="parent"
@@ -84,9 +87,9 @@
     <TextView
         android:id="@+id/textView"
         android:layout_width="wrap_content"
-        android:maxWidth="350dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
+        android:maxWidth="350dp"
         android:textColor="#000000"
         android:textSize="18sp"
         app:layout_constraintEnd_toEndOf="parent"

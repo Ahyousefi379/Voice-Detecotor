@@ -11,7 +11,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.SeekBar;
@@ -32,10 +31,6 @@ import java.io.OutputStream;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import cafe.adriel.androidaudioconverter.AndroidAudioConverter;
-import cafe.adriel.androidaudioconverter.callback.IConvertCallback;
-import cafe.adriel.androidaudioconverter.callback.ILoadCallback;
-import cafe.adriel.androidaudioconverter.model.AudioFormat;
 import javazoom.jl.converter.Converter;
 import javazoom.jl.decoder.JavaLayerException;
 
@@ -48,14 +43,13 @@ public class MainActivity extends AppCompatActivity {
     private static final int WAKE_LOCK_PERMISSION_CODE = 103;
 
     private static final int PICK_FILE_RESULT_CODE = 1;
-    Button actionButton, openAudioBtn;
+    Button actionButton, openAudioBtn, stopButton;
     TextView textView, sensitivityTextview, recordingLengthTextview;
     File directory = new File(Environment.getExternalStorageDirectory() + File.separator + "Voice Detector");
     VoiceProcess voiceProcess1, voiceProcess2;
     Thread thread1, thread2;
     String path;
     SeekBar sensitivitySeekBar, recordingLengthSeekBar;
-    IConvertCallback callback;
     int timeLength, sensitivity;
     MediaPlayer mediaPlayer;
 
@@ -90,38 +84,11 @@ public class MainActivity extends AppCompatActivity {
         sensitivityTextview = findViewById(R.id.sensitivityTextview);
         actionButton = findViewById(R.id.startButton);
         openAudioBtn = findViewById(R.id.OpenAudioBtn);
+        stopButton = findViewById(R.id.stopAlarmBtn);
         textView = findViewById(R.id.textView);
         mediaPlayer = MediaPlayer.create(this, R.raw.alarmsound);
 
-        AndroidAudioConverter.load(this, new ILoadCallback() {
-            @Override
-            public void onSuccess() {
-                Log.e("Converter", "library loaded");
 
-                // Great!
-            }
-
-            @Override
-            public void onFailure(Exception error) {
-                // FFmpeg is not supported by device
-                Log.e("Converter", "library didnt load");
-
-            }
-        });
-
-        callback = new IConvertCallback() {
-            @Override
-            public void onSuccess(File convertedFile) {
-                Toast.makeText(MainActivity.this, "converting finished", Toast.LENGTH_SHORT).show();
-            }
-
-
-            @Override
-            public void onFailure(Exception error) {
-                Log.e("Converter", "problem is converting error :  " + error.getMessage());
-                // Oops! Something went wrong
-            }
-        };
         // todo use room and save sensitivity and time length
         sensitivity = 1;
         timeLength = 3;
@@ -219,8 +186,8 @@ public class MainActivity extends AppCompatActivity {
                         try {
                             copy(new File(getRealPathFromURI(data.getData())), new File(directory + "/" + getFileName(data.getData())));
                             new File(directory + "/" + getFileName(data.getData())).renameTo(new File(directory + "/targetvoice.mp3"));
+                            new Converter().convert(directory + "/targetvoice.mp3", directory + "/targetvoice.wav");
 
-                            new Converter().convert(directory + "/targetvoice.m4a", directory + "/targetvoice.wav");
                         } catch (IOException | JavaLayerException e) {
                             textView.setText(e.getMessage());
                         }
@@ -229,16 +196,21 @@ public class MainActivity extends AppCompatActivity {
                             Toast.makeText(this, "Please select a WAV or MP3 target audio", Toast.LENGTH_SHORT).show();
 
 
-                        }
-                        else{ if (type.contains(".wav")){
-                            try {
-                                copy(new File(getRealPathFromURI(data.getData())), new File(directory + "/" + getFileName(data.getData())));
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                            new File(directory + "/" + getFileName(data.getData())).renameTo(new File(directory + "/targetvoice.wav"));
+                        } else {
+                            if (type.contains(".wav")) {
+                                if (!type.equals("voice1.wav") && !type.equals("voice2.wav")) {
+                                    try {
+                                        copy(new File(getRealPathFromURI(data.getData())), new File(directory + "/" + getFileName(data.getData())));
+                                        new File(directory + "/" + getFileName(data.getData())).renameTo(new File(directory + "/targetvoice.wav"));
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
 
-                        }
+                                } else {
+                                    new File(directory + "/" + getFileName(data.getData())).renameTo(new File(directory + "/targetvoice.wav"));
+                                }
+                            }
+
 
                         }
 
@@ -260,14 +232,15 @@ public class MainActivity extends AppCompatActivity {
                 isRecording = true;
                 actionButton.setText("Stop");
                 sensitivityTextview = findViewById(R.id.sensitivityTextview);
-                voiceProcess1 = new VoiceProcess(1, directory, this, path, sensitivityTextview, sensitivitySeekBar, recordingLengthTextview, timeLength, sensitivity);
-                voiceProcess2 = new VoiceProcess(2, directory, this, path, sensitivityTextview, sensitivitySeekBar, recordingLengthTextview, timeLength, sensitivity);
+                voiceProcess1 = new VoiceProcess(1, directory, this, path, sensitivityTextview, sensitivitySeekBar,
+                        recordingLengthTextview, timeLength, sensitivity, stopButton, this);
+                voiceProcess2 = new VoiceProcess(2, directory, this, path, sensitivityTextview, sensitivitySeekBar,
+                        recordingLengthTextview, timeLength, sensitivity, stopButton, this);
                 if (!isBuilt) {
                     isBuilt = true;
                 }
                 VoiceThreads();
-            }
-            else{
+            } else {
                 Toast.makeText(this, "Please select a WAV or MP3 target audio", Toast.LENGTH_LONG).show();
             }
 
@@ -342,42 +315,30 @@ public class MainActivity extends AppCompatActivity {
         return result;
     }
 
-    private void converter() {
-
-
-        AndroidAudioConverter.with(this)
-                // Your current audio file
-                .setFile(new File(directory + "/targetvoice.m4a"))
-
-                // Your desired audio format
-                .setFormat(AudioFormat.MP3)
-
-
-                // An callback to know when conversion is finished
-                .setCallback(callback)
-
-                // Start conversion
-                .convert();
-
-    }
 
     public void startAlarm() {
-        Intent intent = new Intent(this, AlarmActivity.class);
-        startActivity(intent);
+        stopButton.setVisibility(View.VISIBLE);
+        openAudioBtn.setVisibility(View.INVISIBLE);
+        actionButton.setVisibility(View.INVISIBLE);
         isRecording = false;
         actionButton.setText("Start");
         voiceProcess1.stop();
         voiceProcess2.stop();
         thread1.interrupt();
         thread2.interrupt();
+        mediaPlayer.setLooping(true);
         mediaPlayer.start();
 
+
     }
 
-    public void stopAlarm() {
+
+    public void stopAlarm(View view) throws IOException {
         mediaPlayer.stop();
-        finish();
+        mediaPlayer.prepare();
+        openAudioBtn.setVisibility(View.VISIBLE);
+        actionButton.setVisibility(View.VISIBLE);
+        stopButton.setVisibility(View.GONE);
 
     }
-
 }
