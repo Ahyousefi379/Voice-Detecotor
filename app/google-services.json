@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "457624901087",
+    "firebase_url": "https://voice-detector.firebaseio.com",
+    "project_id": "voice-detector",
+    "storage_bucket": "voice-detector.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:457624901087:android:1006540a824914042d606a",
+        "android_client_info": {
+          "package_name": "com.example.voicedetector"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "457624901087-j1navqcovj1jc06s1mmk9bun0284ueee.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCE6dOy3i3SdD9PDi_FjLVk-kUT7kW2-AU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "457624901087-j1navqcovj1jc06s1mmk9bun0284ueee.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

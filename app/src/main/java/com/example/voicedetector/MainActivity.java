@@ -1,6 +1,7 @@
 package com.example.voicedetector;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -23,11 +24,8 @@ import androidx.core.app.ActivityCompat;
 import androidx.loader.content.CursorLoader;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -37,10 +35,9 @@ import javazoom.jl.decoder.JavaLayerException;
 
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class MainActivity extends AppCompatActivity {
-    private static final int VOICE_RECORD_PERMISSION_CODE = 100;
-    private static final int STORAGE_READ_PERMISSION_CODE = 101;
-    private static final int STORAGE_WRITE_PERMISSION_CODE = 102;
-    private static final int WAKE_LOCK_PERMISSION_CODE = 103;
+
+    private static final int ALL_PERMISSION_CODE = 200;
+
 
     private static final int PICK_FILE_RESULT_CODE = 1;
     Button actionButton, openAudioBtn, stopButton;
@@ -55,29 +52,30 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean isRecording = false, isBuilt = false;
 
-    public static void copy(File src, File dst) throws IOException {
-        try (InputStream in = new FileInputStream(src)) {
-            try (OutputStream out = new FileOutputStream(dst)) {
-                // Transfer bytes from in to out
-                byte[] buf = new byte[1024];
-                int len;
-                while ((len = in.read(buf)) > 0) {
-                    out.write(buf, 0, len);
+
+    public static boolean hasPermissions(Context context, String... permissions) {
+        if (context != null && permissions != null) {
+            for (String permission : permissions) {
+                if (ActivityCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
+                    return false;
                 }
             }
         }
+        return true;
     }
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         //Permissions check
-        checkPermission(Manifest.permission.RECORD_AUDIO, VOICE_RECORD_PERMISSION_CODE);
-        checkPermission(Manifest.permission.READ_EXTERNAL_STORAGE, STORAGE_READ_PERMISSION_CODE);
-        checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, STORAGE_WRITE_PERMISSION_CODE);
-        checkPermission(Manifest.permission.WAKE_LOCK, WAKE_LOCK_PERMISSION_CODE);
+        String[] strings = new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.WAKE_LOCK};
+
+        if (!hasPermissions(this, strings)) {
+            ActivityCompat.requestPermissions(this, strings, ALL_PERMISSION_CODE);
+        }
+
         sensitivitySeekBar = findViewById(R.id.sensitivitySeekbar);
         recordingLengthTextview = findViewById(R.id.recordingLengthTextview);
         recordingLengthSeekBar = findViewById(R.id.recordingLengthSeekbar);
@@ -146,82 +144,76 @@ public class MainActivity extends AppCompatActivity {
 
 
         //open first audio
-        openAudioBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-                intent.setType("audio/*");
-                startActivityForResult(intent, PICK_FILE_RESULT_CODE);
 
-            }
+        openAudioBtn.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+            intent.setType("audio/*");
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setAction(Intent.ACTION_GET_CONTENT);
+            startActivityForResult(intent, PICK_FILE_RESULT_CODE);
+
 
         });
 
     }
 
-    public void checkPermission(String permission, int requestCode) {
-
-        // Checking if permission is not granted
-        if (ActivityCompat.checkSelfPermission(
-                MainActivity.this,
-                permission)
-                == PackageManager.PERMISSION_DENIED) {
-            ActivityCompat
-                    .requestPermissions(
-                            MainActivity.this,
-                            new String[]{permission},
-                            requestCode);
-        }
-    }
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, final Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        switch (requestCode) {
-            case PICK_FILE_RESULT_CODE:
-                if (resultCode == RESULT_OK) {
-                    String type = getFileName(data.getData());
+        if (requestCode == PICK_FILE_RESULT_CODE && resultCode==RESULT_OK ){
 
-                    if (type.contains(".mp3")) {
-                        try {
-                            copy(new File(getRealPathFromURI(data.getData())), new File(directory + "/" + getFileName(data.getData())));
-                            new File(directory + "/" + getFileName(data.getData())).renameTo(new File(directory + "/targetvoice.mp3"));
-                            new Converter().convert(directory + "/targetvoice.mp3", directory + "/targetvoice.wav");
+                String type = getFileName(Objects.requireNonNull(data.getData()));
 
-                        } catch (IOException | JavaLayerException e) {
-                            textView.setText(e.getMessage());
-                        }
-                    } else {
-                        if (!type.contains(".wav")) {
-                            Toast.makeText(this, "Please select a WAV or MP3 target audio", Toast.LENGTH_SHORT).show();
+                if (type.endsWith(".mp3")) {
+                    try {
+                        File file1,file2;
+                        file1=new File(getRealPathFromURI(data.getData()));
+                        file2=new File(directory + "/" + getFileName(data.getData()));
+                        org.apache.commons.io.FileUtils.copyFile(file1,file2);
+                        textView.setText(getRealPathFromURI(data.getData()));
+//                        org.apache.commons.io.FileUtils.copyFile(new File(getRealPathFromURI(data.getData())), new File(directory + "/" + getFileName(data.getData())));
 
+                        new File(directory + File.separator + getFileName(data.getData())).renameTo(new File(directory + File.separator + "targetvoice.mp3"));
+                        new Converter().convert(directory + File.separator + "targetvoice.mp3", directory + File.separator + "targetvoice.wav");
+
+                    } catch (JavaLayerException | IOException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    if (type.endsWith(".wav")) {
+                        if (!type.equals("voice1.wav") && !type.equals("voice2.wav")) {
+                            try {
+                                File file1,file2;
+                                file1=new File(getRealPathFromURI(data.getData()));
+                                file2=new File(directory + "/" + getFileName(data.getData()));
+                                org.apache.commons.io.FileUtils.copyFile(file1,file2);
+//                                org.apache.commons.io.FileUtils.copyFile(new File(getRealPathFromURI(data.getData())), new File(directory + "/" + getFileName(data.getData())));
+                                new File(directory + File.separator + getFileName(data.getData())).renameTo(new File(directory + File.separator + "targetvoice.wav"));
+
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+//
+//                                }
 
                         } else {
-                            if (type.contains(".wav")) {
-                                if (!type.equals("voice1.wav") && !type.equals("voice2.wav")) {
-                                    try {
-                                        copy(new File(getRealPathFromURI(data.getData())), new File(directory + "/" + getFileName(data.getData())));
-                                        new File(directory + "/" + getFileName(data.getData())).renameTo(new File(directory + "/targetvoice.wav"));
-                                    } catch (IOException e) {
-                                        e.printStackTrace();
-                                    }
-
-                                } else {
-                                    new File(directory + "/" + getFileName(data.getData())).renameTo(new File(directory + "/targetvoice.wav"));
-                                }
-                            }
-
-
+                            new File(directory + "/" + getFileName(data.getData())).renameTo(new File(directory + File.separator + "targetvoice.wav"));
                         }
-
-
                     }
+
 
                 }
 
-        }
 
+
+
+        } else {
+            if (data == null) {
+                Toast.makeText(this, "please select a valid audio file", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
+
 
     public void RecordBtn(View view) {
 
@@ -305,16 +297,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private String getRealPathFromURI(Uri contentUri) {
-        String[] proj = {MediaStore.Audio.Media.DATA};
+        String[] proj = { MediaStore.Images.Media.DATA };
         CursorLoader loader = new CursorLoader(this, contentUri, proj, null, null, null);
         Cursor cursor = loader.loadInBackground();
-        int column_index = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA);
+        int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
         cursor.moveToFirst();
         String result = cursor.getString(column_index);
         cursor.close();
         return result;
     }
-
 
     public void startAlarm() {
         stopButton.setVisibility(View.VISIBLE);
@@ -323,7 +314,9 @@ public class MainActivity extends AppCompatActivity {
         isRecording = false;
         actionButton.setText("Start");
         voiceProcess1.stop();
+        voiceProcess1.isRecording = false;
         voiceProcess2.stop();
+        voiceProcess2.isRecording = false;
         thread1.interrupt();
         thread2.interrupt();
         mediaPlayer.setLooping(true);
@@ -331,7 +324,6 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
-
 
     public void stopAlarm(View view) throws IOException {
         mediaPlayer.stop();
@@ -341,4 +333,6 @@ public class MainActivity extends AppCompatActivity {
         stopButton.setVisibility(View.GONE);
 
     }
+
 }
+

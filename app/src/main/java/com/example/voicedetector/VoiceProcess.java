@@ -24,6 +24,7 @@ public class VoiceProcess {
     Runnable runnable1, runnable2;
     TextView textView, textView2;
     SeekBar seekBar;
+    Wave wave2,wave;
     String path;
     Button stopAlarm;
     Context context;
@@ -69,8 +70,14 @@ public class VoiceProcess {
 
                 waveRecorder.stopRecording();
                 isRecording = false;
-                Wave wave = new Wave(directory + "/voice" + number + ".wav");
-                Wave wave2 = new Wave(directory + "/targetvoice.wav");
+                wave = new Wave(directory + "/voice" + number + ".wav");
+                try {
+                    wave2 = new Wave(directory + "/targetvoice.wav");}
+                catch(Exception e) {
+                    e.printStackTrace();
+                    
+                }
+                if (wave2.length()>0){
                 FingerprintSimilarity fingerprintSimilarity;
                 fingerprintSimilarity = wave.getFingerprintSimilarity(wave2);
                 Toast.makeText(context, "similarity = " + fingerprintSimilarity.getScore(), Toast.LENGTH_SHORT).show();
@@ -83,6 +90,8 @@ public class VoiceProcess {
 
                 } else {
                     handler.postDelayed(runnable1, (timeLength - 2) * 1000);
+                }}else {
+                    Toast.makeText(context, "Please select a valid target voice to analyze", Toast.LENGTH_SHORT).show();
                 }
 
             }
