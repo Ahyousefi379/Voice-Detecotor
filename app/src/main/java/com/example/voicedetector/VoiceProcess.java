@@ -2,7 +2,9 @@ package com.example.voicedetector;
 
 import android.content.Context;
 import android.os.Build;
+import android.os.Environment;
 import android.os.Handler;
+import android.provider.MediaStore;
 import android.widget.Button;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -11,10 +13,15 @@ import android.widget.Toast;
 import androidx.annotation.RequiresApi;
 
 import com.github.squti.androidwaverecorder.WaveRecorder;
+import com.musicg.fingerprint.FingerprintManager;
 import com.musicg.fingerprint.FingerprintSimilarity;
+import com.musicg.fingerprint.FingerprintSimilarityComputer;
 import com.musicg.wave.Wave;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 
 public class VoiceProcess {
     WaveRecorder waveRecorder;
@@ -45,9 +52,6 @@ public class VoiceProcess {
         this.textView = textView;
         this.context = context;
         this.directory = directory;
-        waveRecorder = new WaveRecorder(this.directory.getPath() + "/voice" + number + ".wav");
-        waveRecorder.getWaveConfig().setSampleRate(44100);
-        waveRecorder.setNoiseSuppressorActive(true);
 
 
     }
@@ -57,6 +61,9 @@ public class VoiceProcess {
         runnable1 = new Runnable() {
             @Override
             public void run() {
+                waveRecorder = new WaveRecorder(directory.getPath() + "/voice" + number + ".wav");
+                waveRecorder.getWaveConfig().setSampleRate(44100);
+                waveRecorder.setNoiseSuppressorActive(true);
                 waveRecorder.startRecording();
                 isRecording = true;
                 handler.postDelayed(runnable2, timeLength * 1000);
@@ -70,7 +77,11 @@ public class VoiceProcess {
 
                 waveRecorder.stopRecording();
                 isRecording = false;
+
                 wave = new Wave(directory + "/voice" + number + ".wav");
+//                wave = new Wave(directory + "/targetvoice.wav");
+
+
                 try {
                     wave2 = new Wave(directory + "/targetvoice.wav");}
                 catch(Exception e) {
@@ -78,9 +89,14 @@ public class VoiceProcess {
                     
                 }
                 if (wave2.length()>0){
-                FingerprintSimilarity fingerprintSimilarity;
-                fingerprintSimilarity = wave.getFingerprintSimilarity(wave2);
-                Toast.makeText(context, "similarity = " + fingerprintSimilarity.getScore(), Toast.LENGTH_SHORT).show();
+//                FingerprintSimilarity fingerprintSimilarity;
+//                fingerprintSimilarity = wave.getFingerprintSimilarity(wave2);
+//                    number=number+2;
+                    byte[] firstFingerPrint = new FingerprintManager().extractFingerprint(wave);
+                    byte[] secondFingerPrint = new FingerprintManager().extractFingerprint(wave2);
+                    // Compare fingerprints
+                    FingerprintSimilarity fingerprintSimilarity = new FingerprintSimilarityComputer(firstFingerPrint, secondFingerPrint).getFingerprintsSimilarity();
+                Toast.makeText(context, "similarity = " + fingerprintSimilarity.getScore()*100, Toast.LENGTH_SHORT).show();
 
                 //todo process
 
@@ -118,5 +134,6 @@ public class VoiceProcess {
         this.timeLength = timeLength;
     }
 
+   
 
 }

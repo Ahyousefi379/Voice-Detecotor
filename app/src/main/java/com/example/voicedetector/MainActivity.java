@@ -23,11 +23,16 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.loader.content.CursorLoader;
 
+import com.nbsp.materialfilepicker.MaterialFilePicker;
+import com.nbsp.materialfilepicker.ui.FilePickerActivity;
+
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.regex.Pattern;
 
 import javazoom.jl.converter.Converter;
 import javazoom.jl.decoder.JavaLayerException;
@@ -146,11 +151,21 @@ public class MainActivity extends AppCompatActivity {
         //open first audio
 
         openAudioBtn.setOnClickListener(v -> {
-            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-            intent.setType("audio/*");
-            intent.addCategory(Intent.CATEGORY_OPENABLE);
-            intent.setAction(Intent.ACTION_GET_CONTENT);
-            startActivityForResult(intent, PICK_FILE_RESULT_CODE);
+            MaterialFilePicker materialFilePicker=new MaterialFilePicker();
+            materialFilePicker.withActivity(this)
+                    .withRootPath(Environment.getExternalStorageDirectory().getPath())
+                    .withFilter(Pattern.compile(".*\\.(mp3|wav)$"))
+                    .withTitle("choose your target audio")
+                    .withRequestCode(PICK_FILE_RESULT_CODE)
+                    .start();
+
+//            Intent intent = new Intent(Intent.ACTION_PICK,
+//                    android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI);
+//            String[] mimetypes = {"audio/mpeg", "audio/wav"};
+//            intent.addCategory(Intent.CATEGORY_OPENABLE);
+//            intent.setType("audio/*");
+//            intent.setAction(Intent.ACTION_GET_CONTENT);
+//            startActivityForResult(intent, PICK_FILE_RESULT_CODE);
 
 
         });
@@ -162,18 +177,22 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == PICK_FILE_RESULT_CODE && resultCode==RESULT_OK ){
 
-                String type = getFileName(Objects.requireNonNull(data.getData()));
+//                String type = getFileName(Objects.requireNonNull(data.getData()));
+            String type = data.getStringExtra(FilePickerActivity.RESULT_FILE_PATH);
 
-                if (type.endsWith(".mp3")) {
+            assert type != null;
+            if (type.endsWith(".mp3")) {
                     try {
                         File file1,file2;
-                        file1=new File(getRealPathFromURI(data.getData()));
-                        file2=new File(directory + "/" + getFileName(data.getData()));
+
+                        file1=new File(type);
+//                        file1=new File(getRealPathFromURI(data.getData()));
+                        file2=new File(directory + "/" + "targetvoice.mp3");
                         org.apache.commons.io.FileUtils.copyFile(file1,file2);
-                        textView.setText(getRealPathFromURI(data.getData()));
+//                        textView.setText(getRealPathFromURI(data.getData()));
 //                        org.apache.commons.io.FileUtils.copyFile(new File(getRealPathFromURI(data.getData())), new File(directory + "/" + getFileName(data.getData())));
 
-                        new File(directory + File.separator + getFileName(data.getData())).renameTo(new File(directory + File.separator + "targetvoice.mp3"));
+//                        new File(directory + File.separator + getFileName(data.getData())).renameTo(new File(directory + File.separator + "targetvoice.mp3"));
                         new Converter().convert(directory + File.separator + "targetvoice.mp3", directory + File.separator + "targetvoice.wav");
 
                     } catch (JavaLayerException | IOException e) {
@@ -184,11 +203,11 @@ public class MainActivity extends AppCompatActivity {
                         if (!type.equals("voice1.wav") && !type.equals("voice2.wav")) {
                             try {
                                 File file1,file2;
-                                file1=new File(getRealPathFromURI(data.getData()));
-                                file2=new File(directory + "/" + getFileName(data.getData()));
+                                file1=new File(type);
+                                file2=new File(directory + "/" + "targetvoice.wav");
                                 org.apache.commons.io.FileUtils.copyFile(file1,file2);
 //                                org.apache.commons.io.FileUtils.copyFile(new File(getRealPathFromURI(data.getData())), new File(directory + "/" + getFileName(data.getData())));
-                                new File(directory + File.separator + getFileName(data.getData())).renameTo(new File(directory + File.separator + "targetvoice.wav"));
+//                                new File(directory + File.separator + getFileName(data.getData())).renameTo(new File(directory + File.separator + "targetvoice.wav"));
 
                             } catch (IOException e) {
                                 e.printStackTrace();
@@ -196,9 +215,11 @@ public class MainActivity extends AppCompatActivity {
 //
 //                                }
 
-                        } else {
-                            new File(directory + "/" + getFileName(data.getData())).renameTo(new File(directory + File.separator + "targetvoice.wav"));
                         }
+//                        else
+//                            {
+//                            new File(directory + "/" + getFileName(data.getData())).renameTo(new File(directory + File.separator + "targetvoice.wav"));
+//                        }
                     }
 
 
